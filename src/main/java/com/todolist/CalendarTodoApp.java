@@ -33,6 +33,8 @@ public class CalendarTodoApp extends JFrame {
         calendarPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         calendarPanel.refreshPercentages();
 
+        TaskCreateSidebar sidebar = new TaskCreateSidebar(store, calendarPanel::refreshPercentages);
+
         monthLabel = new JLabel(calendarPanel.getCurrentMonth().format(MONTH_YEAR));
         monthLabel.setFont(monthLabel.getFont().deriveFont(Font.BOLD, 18f));
         monthLabel.setBorder(new EmptyBorder(0, 0, 8, 0));
@@ -53,14 +55,15 @@ public class CalendarTodoApp extends JFrame {
         setLayout(new BorderLayout(8, 8));
         getContentPane().setBackground(new Color(45, 45, 55));
         add(top, BorderLayout.NORTH);
+        add(sidebar, BorderLayout.WEST);
         add(calendarPanel, BorderLayout.CENTER);
 
-        JLabel hint = new JLabel("Click a day to edit todos. Shift+click another day to select a range (add task to each day or one multi-day task). Percent = completed for that day.");
+        JLabel hint = new JLabel("Left: add tasks (single or multi-day). Click a day to edit that day's todos. Shift+click a range for bulk options.");
         hint.setForeground(Color.GRAY);
         hint.setBorder(new EmptyBorder(4, 12, 8, 12));
         add(hint, BorderLayout.SOUTH);
 
-        setSize(520, 420);
+        setSize(780, 420);
         setLocationRelativeTo(null);
     }
 
