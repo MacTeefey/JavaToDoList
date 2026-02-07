@@ -41,14 +41,14 @@ public class DayTodoDialog extends JDialog {
         this.newTodoField = new JTextField(28);
 
         boolean rangeMode = isRangeMode();
-        setTitle(rangeMode ? "Todos - " + dateFrom.format(SHORT_FMT) + " - " + this.dateTo.format(SHORT_FMT)
-                : "Todos - " + dateFrom.format(DATE_FMT));
+        setTitle(rangeMode ? "Todos: " + dateFrom.format(SHORT_FMT) + " to " + this.dateTo.format(SHORT_FMT)
+                : "Todos: " + dateFrom.format(DATE_FMT));
 
         setLayout(new BorderLayout(10, 10));
         ((JPanel) getContentPane()).setBorder(new EmptyBorder(12, 12, 12, 12));
 
         JLabel titleLabel = new JLabel(rangeMode
-                ? dateFrom.format(DATE_FMT) + "  ->  " + this.dateTo.format(DATE_FMT)
+                ? dateFrom.format(DATE_FMT) + "  to  " + this.dateTo.format(DATE_FMT)
                 : dateFrom.format(DATE_FMT));
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 14f));
         add(titleLabel, BorderLayout.NORTH);
@@ -149,7 +149,7 @@ public class DayTodoDialog extends JDialog {
             JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
             String label = item.getTitle();
             if (item.isMultiDay()) {
-                label += " (" + item.getDate().format(SHORT_FMT) + " - " + item.getEndDate().format(SHORT_FMT) + ")";
+                label += " (" + item.getDate().format(SHORT_FMT) + " to " + item.getEndDate().format(SHORT_FMT) + ")";
             }
             JCheckBox check = new JCheckBox(label, item.isCompleted());
             check.addActionListener(e -> {
