@@ -49,7 +49,7 @@ public class TodoStore {
     }
 
     private static String formatLine(TodoItem item) {
-        return item.getId() + "|" + item.getDate() + "|" + escape(item.getTitle()) + "|" + item.isCompleted();
+        return item.getId() + "|" + item.getDate() + "|" + item.getEndDate() + "|" + escape(item.getTitle()) + "|" + item.isCompleted();
     }
 
     private static String escape(String s) {
@@ -76,14 +76,35 @@ public class TodoStore {
         } catch (Exception e) {
             return null;
         }
-        String title = unescape(line.substring(b + 1, c));
-        boolean completed = "true".equalsIgnoreCase(line.substring(c + 1).trim());
-        return new TodoItem(id, date, title, completed);
+        // 5-field: id|startDate|endDate|title|completed; 4-field (legacy): id|date|title|completed
+        int d = line.indexOf('|', c + 1);
+        if (d < 0) {
+            String title = unescape(line.substring(b + 1, c));
+            boolean completed = "true".equalsIgnoreCase(line.substring(c + 1).trim());
+            return new TodoItem(id, date, title, completed);
+        }
+        LocalDate endDate;
+        try {
+            endDate = LocalDate.parse(line.substring(b + 1, c));
+        } catch (Exception e) {
+            return null;
+        }
+        String title = unescape(line.substring(c + 1, d));
+        boolean completed = "true".equalsIgnoreCase(line.substring(d + 1).trim());
+        return new TodoItem(id, date, endDate, title, completed);
     }
 
+    /** Items that include this date (single-day or multi-day range containing date). */
     public List<TodoItem> getItemsFor(LocalDate date) {
         return items.stream()
-                .filter(i -> i.getDate().equals(date))
+                .filter(i -> !date.isBefore(i.getDate()) && !date.isAfter(i.getEndDate()))
+                .collect(Collectors.toList());
+    }
+
+    /** Items that overlap the range [from, to] (inclusive). One entry per item. */
+    public List<TodoItem> getItemsInRange(LocalDate from, LocalDate to) {
+        return items.stream()
+                .filter(i -> !i.getEndDate().isBefore(from) && !i.getDate().isAfter(to))
                 .collect(Collectors.toList());
     }
 
@@ -107,16 +128,18 @@ public class TodoStore {
         return items.stream().filter(i -> i.getId().equals(id)).findFirst();
     }
 
-    /** Completed count for the given date. */
+    /** Completed count for the given date (items spanning this date that are completed). */
     public long completedCount(LocalDate date) {
         return items.stream()
-                .filter(i -> i.getDate().equals(date) && i.isCompleted())
+                .filter(i -> !date.isBefore(i.getDate()) && !date.isAfter(i.getEndDate()) && i.isCompleted())
                 .count();
     }
 
-    /** Total count for the given date. */
+    /** Total count for the given date (items spanning this date). */
     public long totalCount(LocalDate date) {
-        return items.stream().filter(i -> i.getDate().equals(date)).count();
+        return items.stream()
+                .filter(i -> !date.isBefore(i.getDate()) && !date.isAfter(i.getEndDate()))
+                .count();
     }
 
     /** Percent completed for the day (0–100). If no items, returns 0. */

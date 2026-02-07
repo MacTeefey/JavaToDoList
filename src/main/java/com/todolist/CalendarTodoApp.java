@@ -55,7 +55,7 @@ public class CalendarTodoApp extends JFrame {
         add(top, BorderLayout.NORTH);
         add(calendarPanel, BorderLayout.CENTER);
 
-        JLabel hint = new JLabel("Click a day to view or edit todos. Percent = completed tasks for that day.");
+        JLabel hint = new JLabel("Click a day to edit todos. Shift+click another day to select a range (add task to each day or one multi-day task). Percent = completed for that day.");
         hint.setForeground(Color.GRAY);
         hint.setBorder(new EmptyBorder(4, 12, 8, 12));
         add(hint, BorderLayout.SOUTH);

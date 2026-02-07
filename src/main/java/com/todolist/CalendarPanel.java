@@ -18,6 +18,10 @@ public class CalendarPanel extends JPanel {
     private final TodoStore store;
     private final List<DayCell> dayCells = new ArrayList<>();
     private Runnable onDaySelected;
+    /** Anchor for range selection (first click). */
+    private LocalDate anchorDate;
+    /** End of range when shift+click (inclusive). */
+    private LocalDate rangeEndDate;
 
     public CalendarPanel(TodoStore store) {
         this.store = store;
@@ -84,8 +88,26 @@ public class CalendarPanel extends JPanel {
     }
 
     public void setSelectedDate(LocalDate date) {
-        for (DayCell cell : dayCells) {
-            cell.setSelected(cell.getDate().equals(date));
+        this.anchorDate = date;
+        this.rangeEndDate = null;
+        updateSelectionHighlight();
+    }
+
+    /** Updates which cells appear selected (single date or range). */
+    private void updateSelectionHighlight() {
+        LocalDate from = anchorDate;
+        LocalDate to = rangeEndDate != null ? rangeEndDate : anchorDate;
+        if (from != null && to != null) {
+            LocalDate start = from.isBefore(to) ? from : to;
+            LocalDate end = from.isBefore(to) ? to : from;
+            for (DayCell cell : dayCells) {
+                LocalDate d = cell.getDate();
+                cell.setSelected(!d.isBefore(start) && !d.isAfter(end));
+            }
+        } else if (anchorDate != null) {
+            for (DayCell cell : dayCells) {
+                cell.setSelected(cell.getDate().equals(anchorDate));
+            }
         }
     }
 
@@ -117,12 +139,27 @@ public class CalendarPanel extends JPanel {
             addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
                 public void mouseClicked(java.awt.event.MouseEvent e) {
-                    setSelectedDate(date);
-                    if (onDaySelected != null) onDaySelected.run();
-                    DayTodoDialog dialog = new DayTodoDialog(
-                            (Frame) SwingUtilities.getWindowAncestor(CalendarPanel.this),
-                            date, store, CalendarPanel.this::refreshPercentages);
-                    dialog.setVisible(true);
+                    boolean shift = (e.getModifiersEx() & java.awt.event.InputEvent.SHIFT_DOWN_MASK) != 0;
+                    if (shift && anchorDate != null) {
+                        rangeEndDate = date;
+                        updateSelectionHighlight();
+                        if (onDaySelected != null) onDaySelected.run();
+                        LocalDate start = anchorDate.isBefore(date) ? anchorDate : date;
+                        LocalDate end = anchorDate.isBefore(date) ? date : anchorDate;
+                        DayTodoDialog dialog = new DayTodoDialog(
+                                (Frame) SwingUtilities.getWindowAncestor(CalendarPanel.this),
+                                start, end, store, CalendarPanel.this::refreshPercentages);
+                        dialog.setVisible(true);
+                    } else {
+                        anchorDate = date;
+                        rangeEndDate = null;
+                        updateSelectionHighlight();
+                        if (onDaySelected != null) onDaySelected.run();
+                        DayTodoDialog dialog = new DayTodoDialog(
+                                (Frame) SwingUtilities.getWindowAncestor(CalendarPanel.this),
+                                date, null, store, CalendarPanel.this::refreshPercentages);
+                        dialog.setVisible(true);
+                    }
                 }
 
                 @Override
